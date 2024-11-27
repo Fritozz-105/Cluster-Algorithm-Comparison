@@ -1,0 +1,8 @@
+.home-title {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+    text-align: center;
+    padding-top: 15px;
+}
