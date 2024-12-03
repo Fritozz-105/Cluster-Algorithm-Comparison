@@ -130,31 +130,39 @@ if __name__ == "__main__":
     stock_data.to_csv(output_csv, index=True)
     """
 
-    # File paths
-    input_csv: str = "ClusterAlgorithmComparison/backend/sp500_adj_close_data.csv"
-    output_csv: str = "ClusterAlgorithmComparison/backend/sp500_preprocessed_data.csv"
+    if __name__ == "__main__":
+        # File paths
+        input_csv: str = "ClusterAlgorithmComparison/backend/sp500_adj_close_data.csv"
+        output_csv: str = "ClusterAlgorithmComparison/backend/sp500_preprocessed_data.csv"
 
-    # Load cleaned stock price data
-    print(f"Loading data from {input_csv}...")
-    raw_data: pd.DataFrame = pd.read_csv(input_csv, index_col=0, parse_dates=True)
+        # Load cleaned stock price data
+        print(f"Loading data from {input_csv}...")
+        raw_data: pd.DataFrame = pd.read_csv(input_csv, index_col=0, parse_dates=True)
 
-    # Calculate returns and volatility
-    print("Calculating daily returns...")
-    returns: pd.DataFrame = calculate_returns(raw_data)
+        # Calculate returns and volatility
+        print("Calculating daily returns...")
+        returns: pd.DataFrame = calculate_returns(raw_data)
 
-    print("Calculating rolling volatility...")
-    volatility: pd.DataFrame = calculate_volatility(raw_data)
+        print("Calculating rolling volatility...")
+        volatility: pd.DataFrame = calculate_volatility(raw_data)
 
-    # Combine features
-    print("Combining features (returns and volatility)...")
-    combined_data: pd.DataFrame = pd.concat([returns, volatility], axis=1, keys=["Returns", "Volatility"]).dropna()
+        # Combine features
+        print("Combining features (returns and volatility)...")
+        combined_data: pd.DataFrame = pd.concat(
+            [returns, volatility], axis=1, keys=["Returns", "Volatility"]
+        ).dropna()
 
-    # Normalize features
-    print("Normalizing features...")
-    normalized_data: pd.DataFrame = normalize_features(combined_data)
+        # Flatten multi-level columns to make them unique
+        combined_data.columns = [
+            f"{col[0]}_{col[1]}" for col in combined_data.columns.to_flat_index()
+        ]
 
-    # Save preprocessed data
-    print(f"Saving preprocessed data to {output_csv}...")
-    normalized_data.to_csv(output_csv, index=True)
-    print("Preprocessing complete.")
+        # Normalize features
+        print("Normalizing features...")
+        normalized_data: pd.DataFrame = normalize_features(combined_data)
+
+        # Save preprocessed data
+        print(f"Saving preprocessed data to {output_csv}...")
+        normalized_data.to_csv(output_csv, index=True)
+        print("Preprocessing complete.")
 
