@@ -1,9 +1,7 @@
 # S&P 500 Clustering Project
 
 ## Overview
-This project applies clustering techniques to analyze S&P 500 stock data based on their historical adjusted close prices. The goal is to group stocks into clusters that share similar characteristics, using **K-Means Clustering** as the primary algorithm. The project involves data preprocessing, cluster analysis, and validation, providing insights into market behavior and asset groupings.
-
-The repository is structured to allow scalability for additional clustering methods and advanced analytics.
+This project applies clustering techniques to analyze S&P 500 stock data based on their historical adjusted close prices. The goal is to group stocks into clusters that share similar characteristics, using **K-Means Clustering** and **Gaussian Mixture Model** as the primary algorithms. The project involves data preprocessing, cluster analysis, and validation, providing insights into market behavior and asset groupings.
 
 ---
 
