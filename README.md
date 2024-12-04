@@ -5,6 +5,27 @@ This project applies clustering techniques to analyze S&P 500 stock data based o
 
 ---
 
+## Prerequisites
+
+### Install Node JS
+Refer to https://nodejs.org/en/ to install Node.js
+
+## Cloning and Running the Application in local
+
+Clone the project into local
+
+Install all the npm packages. Go into the project folder and type the following command to install all npm packages.
+
+```bash
+npm install
+```
+
+To run the application locally use:
+
+```bash
+npm run dev
+```
+
 ## Project Features
 
 ### Backend
