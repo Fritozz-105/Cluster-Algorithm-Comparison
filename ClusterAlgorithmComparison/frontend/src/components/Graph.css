@@ -1,0 +1,17 @@
+* {
+    box-sizing: border-box;
+}
+
+.graph-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+}
+
+.graph-wrapper {
+    width: 100%;
+    max-width: 1600px;
+    min-width: 400px;
+}
