@@ -1,0 +1,21 @@
+.analysis-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+}
+
+.analysis-title {
+    margin-bottom: 20px;
+}
+
+.analysis-form {
+    margin-bottom: 10px;
+}
+
+.graph-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}

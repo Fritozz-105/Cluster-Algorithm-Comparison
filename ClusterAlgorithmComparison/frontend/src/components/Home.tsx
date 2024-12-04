@@ -24,7 +24,6 @@ const Home = () => {
 
     return (
         <div className="home-page">
-
             <Header />
 
             <div className="home-title">
@@ -45,13 +44,16 @@ const Home = () => {
                 />
             </div>
             <div className="next-button">
-                <button onClick={handleSubmit}>
+                <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    disabled={!formInput.input1 || !formInput.input2}
+                >
                     Next
                 </button>
             </div>
 
             <Footer />
-
         </div>
     );
 };

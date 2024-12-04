@@ -78,6 +78,18 @@
     transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
+.next-button button:disabled {
+    background-color: #2f2f2f;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.next-button button:disabled:hover {
+    background-color: #2f2f2f;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .next-button button:hover {
     background-color: #dfdfdf;
 }
