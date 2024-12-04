@@ -3,6 +3,8 @@ import "./Analysis.css";
 import Header from "./Header";
 import Footer from "./Footer";
 import Graph from "./Graph";
+import Data1 from "../assets/sampledata1.csv?url";
+import Data2 from "../assets/sampledata2.csv?url";
 
 const Analysis = () => {
     const location = useLocation();
@@ -23,7 +25,8 @@ const Analysis = () => {
             </div>
 
             <div className="graph-section">
-                <Graph />
+                <Graph csv={Data1} title="K-Means"/>
+                <Graph csv={Data2} title="Gaussian"/>
             </div>
 
             <Footer />

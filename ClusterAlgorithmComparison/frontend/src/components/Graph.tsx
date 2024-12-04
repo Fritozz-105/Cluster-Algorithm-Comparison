@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
 import Papa from "papaparse";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import Data from "../assets/sampledata.csv?url";
 import "./Graph.css";
 
-const Graph = () => {
+interface GraphProps {
+    csv: string;
+    title: string;
+}
+
+const Graph: React.FC<GraphProps> = ({ csv, title }) => {
     const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
         const parseCSV = () => {
-            Papa.parse(Data, {
+            Papa.parse(csv, {
                 download: true,
                 header: true,
                 complete: (results) => {
@@ -30,7 +34,7 @@ const Graph = () => {
         };
 
         parseCSV();
-    }, []);
+    }, [csv]);
 
     const getPlottableColumns = () => {
         if (chartData.length === 0) return [];
@@ -49,7 +53,7 @@ const Graph = () => {
     return (
         <div className="graph-container">
             <div className="graph-wrapper">
-                <h2>Graph</h2>
+                <h2>{title}</h2>
                 {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={500}>
                         <LineChart data={chartData}>
@@ -63,11 +67,11 @@ const Graph = () => {
                             <Legend />
                             {plottableColumns.map((column, index) => (
                                 <Line
-                                key={column}
-                                type="monotone"
-                                dataKey={column}
-                                stroke={`hsl(${index * 60}, 70%, 50%)`}
-                                activeDot={{ r: 8 }}
+                                    key={column}
+                                    type="monotone"
+                                    dataKey={column}
+                                    stroke={`hsl(${index * 60}, 70%, 50%)`}
+                                    activeDot={{ r: 8 }}
                                 />
                             ))}
                         </LineChart>
