@@ -153,6 +153,7 @@ class GMM:
             print(f"Iteration {iteration + 1}, Log-Likelihood: {log_likelihood_new:.4f}")
             if np.abs(log_likelihood_new - log_likelihood_old) < self.tol:
                 print("Convergence achieved.")
+                print(f"Final Log-Likelihood: {log_likelihood_new:.4f}")
                 break
 
             log_likelihood_old = log_likelihood_new
@@ -189,6 +190,15 @@ class GMM:
         plt.legend()
         plt.show()
 
+def optimal_cluster_number(X: np.ndarray):
+    bic_scores = []
+    for n in range(1, 10):
+        gmm = GMM(n_clusters=n, max_iter=100, tol=1e-4, reg_covar=1e-3)
+        gmm.fit(X)
+        bic_scores.append(gmm._compute_log_likelihood(X))
+    best_n = np.argmin(bic_scores) + 1
+    print(f"Optimal clusters: {best_n}")
+
 
 if __name__ == "__main__":
     input_csv = "ClusterAlgorithmComparison/backend/sp500_preprocessed_data.csv"
@@ -201,15 +211,18 @@ if __name__ == "__main__":
     data = pd.read_csv(input_csv, index_col=0)
 
     print("Standardizing features...")
-    scaler = StandardScaler()
+    scaler = StandardScaler(with_std=False)
     feature_data = scaler.fit_transform(data.values)
 
     print("Performing PCA for dimensionality reduction...")
-    pca = PCA(n_components=2)
+    n_components = 2
+    pca = PCA(n_components=100)
     feature_data_pca = pca.fit_transform(feature_data)
+    print(f"Explained variance ratio: {pca.explained_variance_ratio_}")
+    print(f"Total explained variance: {np.sum(pca.explained_variance_ratio_)}")
 
-    print(f"Fitting GMM with {2} clusters...")
-    gmm = GMM(n_clusters=2, max_iter=100, tol=1e-4, reg_covar=1e-2)
+    print(f"Fitting GMM with {n_components} clusters...")
+    gmm = GMM(n_clusters=n_components, max_iter=100, tol=1e-4, reg_covar=1e-3)
     gmm.fit(feature_data_pca)
 
     print("Predicting cluster assignments...")
