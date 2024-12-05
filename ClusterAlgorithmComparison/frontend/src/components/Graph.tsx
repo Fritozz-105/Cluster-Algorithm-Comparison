@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Papa from "papaparse";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import "./Graph.css";
 
 interface GraphProps {
     csv: string;
     title: string;
+    xAxisTitle?: string;
+    yAxisTitle?: string;
 }
 
-const Graph: React.FC<GraphProps> = ({ csv, title }) => {
+const Graph: React.FC<GraphProps> = ({ csv, title, xAxisTitle, yAxisTitle }) => {
     const [chartData, setChartData] = useState<any[]>([]);
+    const [xAxisColumn, setXAxisColumn] = useState<string>('');
 
     useEffect(() => {
         const parseCSV = () => {
@@ -26,7 +29,22 @@ const Graph: React.FC<GraphProps> = ({ csv, title }) => {
                         }, {} as any);
                     });
 
-                    setChartData(parsedData);
+                    const numericColumns = Object.keys(parsedData[0])
+                        .filter(key => typeof parsedData[0][key] === 'number' && key.toLowerCase() !== 'id');
+
+                    if (numericColumns.length > 0) {
+                        const firstNumericColumn = numericColumns[0];
+                        setXAxisColumn(firstNumericColumn);
+
+                        const sortedData = [...parsedData].sort((a, b) =>
+                            (a[firstNumericColumn] || 0) - (b[firstNumericColumn] || 0)
+                        );
+
+                        setChartData(sortedData);
+                    } else {
+                        setChartData(parsedData);
+                    }
+
                     console.log("Parsed Data:", parsedData);
                 },
                 skipEmptyLines: true
@@ -36,45 +54,44 @@ const Graph: React.FC<GraphProps> = ({ csv, title }) => {
         parseCSV();
     }, [csv]);
 
-    const getPlottableColumns = () => {
-        if (chartData.length === 0) return [];
-
-        const firstRow = chartData[0];
-        return Object.keys(firstRow)
-            .filter(key =>
-                typeof firstRow[key] === 'number' &&
-                key.toLowerCase() !== 'id'
-            );
-    };
-
-    const plottableColumns = getPlottableColumns();
-    console.log("Plottable Columns:", plottableColumns);
-
     return (
         <div className="graph-container">
             <div className="graph-wrapper">
                 <h2>{title}</h2>
                 {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={500}>
-                        <LineChart data={chartData}>
+                        <ScatterChart>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis
-                                dataKey={Object.keys(chartData[0])[0]}
-                                allowDuplicatedCategory={false}
+                                dataKey={xAxisColumn}
+                                type="number"
+                                name={xAxisColumn}
+                                label={{
+                                    value: xAxisTitle || xAxisColumn,
+                                    position: 'insideBottomRight',
+                                    offset: -5
+                                }}
                             />
-                            <YAxis />
-                            <Tooltip />
+                            <YAxis
+                                dataKey={Object.keys(chartData[0]).find(key =>
+                                    typeof chartData[0][key] === 'number' && key !== xAxisColumn
+                                )}
+                                type="number"
+                                name={yAxisTitle}
+                                label={{
+                                    value: yAxisTitle || 'Y-Axis',
+                                    angle: -90,
+                                    position: 'insideLeft'
+                                }}
+                            />
+                            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                             <Legend />
-                            {plottableColumns.map((column, index) => (
-                                <Line
-                                    key={column}
-                                    type="monotone"
-                                    dataKey={column}
-                                    stroke={`hsl(${index * 60}, 70%, 50%)`}
-                                    activeDot={{ r: 8 }}
-                                />
-                            ))}
-                        </LineChart>
+                            <Scatter
+                                name="Data Points"
+                                data={chartData}
+                                fill="hsl(180, 70%, 50%)"
+                            />
+                        </ScatterChart>
                     </ResponsiveContainer>
                 ) : (
                     <div>
