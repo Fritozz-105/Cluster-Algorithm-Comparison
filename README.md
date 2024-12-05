@@ -10,23 +10,47 @@ This project applies clustering techniques to analyze S&P 500 stock data based o
 ### Install Node JS
 Refer to https://nodejs.org/en/ to install Node.js
 
-## Cloning and Running the Application in local
+### Installation Poetry
+This project uses [Poetry](https://python-poetry.org/) for dependency management and packaging. Poetry allows for an easy and reliable way to manage project dependencies, ensuring a consistent
 
-Clone the project into local
+To get started, you need to have Poetry installed. You can install Poetry by following the instructions on the [official documentation](https://python-poetry.org/docs/#installation).
 
-Install all the npm packages. Go into the project folder and type the following command to install all npm packages.
+Alternatively, you can use this command to install it:
 
 ```bash
-npm install
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-To run the application locally use:
+### Installation
+Clone the repo
+   ```sh
+   https://github.com/Fritozz-105/Cluster-Algorithm-Comparison.git
+   ```
+Install NPM packages
+   ```sh
+   npm install
+   ```
+To run the application locally use in the frontend directory:
 
 ```bash
 npm run dev
 ```
 
+And use this command in the backend directory:
+```bash
+python main.py
+```
+
 ## Project Features
+
+### Frontend
+1. **Navigation**:
+   - Navigate towards the cluster algorithm analysis page by pressing the next button.
+   - Click the logo in the header to return to the start page.
+
+2. **Data Display**:
+   - Fetches the CSV data returned from the **K-Means Clustering Algorithm** and **Gausian Mixture Model Algorithm** and displays it in a scatterplot.
+   - Fetches the Silhouette Score, Calinski-Harabasz Index, and Davies-Bouldin Index to compare the performance between the two algorithms and displays it as a table.
 
 ### Backend
 1. **Data Collection and Cleaning**:
