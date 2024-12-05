@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, make_response
 from flask_cors import CORS
 import pandas as pd
 import numpy as np
@@ -6,27 +6,13 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-import os
+import io
 
 from kmeans_clustering import KMeansClustering
 from gmm_clustering import GMM
 
 app = Flask(__name__)
 cors = CORS(app, origins="*")
-
-@app.route("/api/books", methods=["GET"])
-def greeting():
-    return jsonify(
-        {
-            "books": [
-                "To Kill a Mocking Bird",
-                "Hamlet",
-                "Brave New World",
-                "1984",
-                "The Great Gatsby"
-            ]
-        }
-    )
 
 def perform_clustering():
     # Load data
@@ -41,48 +27,47 @@ def perform_clustering():
     pca = PCA(n_components=5)
     pca_data = pca.fit_transform(standardized_data)
 
-    # Fit GMM
-    gmm = GMM(n_clusters=2)
-    gmm.fit(pca_data)
-    gmm_labels = gmm.predict(pca_data)
-
     # Fit K-Means
     kmeans = KMeansClustering(n_clusters=2)
     kmeans_labels, _ = kmeans.fit(pca_data)
 
+    # Apply GMM
+    gmm = GMM(n_clusters=2)
+    gmm.fit(pca_data)
+    gmm_labels = gmm.predict(pca_data)
+
     # Compute metrics
-    silhouette_gmm = silhouette_score(pca_data, gmm_labels)
-    silhouette_kmeans = silhouette_score(pca_data, kmeans_labels)
-    calinski_gmm = calinski_harabasz_score(pca_data, gmm_labels)
-    calinski_kmeans = calinski_harabasz_score(pca_data, kmeans_labels)
-    davies_gmm = davies_bouldin_score(pca_data, gmm_labels)
-    davies_kmeans = davies_bouldin_score(pca_data, kmeans_labels)
-
-    gmm_df = pd.DataFrame({'GMM_Cluster': gmm_labels})
-    kmeans_df = pd.DataFrame({'KMeans_Cluster': kmeans_labels})
-
     metrics = {
-        'Silhouette_Score_GMM': silhouette_gmm,
-        'Silhouette_Score_KMeans': silhouette_kmeans,
-        'Calinski_Harabasz_GMM': calinski_gmm,
-        'Calinski_Harabasz_KMeans': calinski_kmeans,
-        'Davies_Bouldin_GMM': davies_gmm,
-        'Davies_Bouldin_KMeans': davies_kmeans
+        'Silhouette_Score_KMeans': silhouette_score(pca_data, kmeans_labels),
+        'Silhouette_Score_GMM': silhouette_score(pca_data, gmm_labels),
+        'Calinski_Harabasz_KMeans': calinski_harabasz_score(pca_data, kmeans_labels),
+        'Calinski_Harabasz_GMM': calinski_harabasz_score(pca_data, gmm_labels),
+        'Davies_Bouldin_KMeans': davies_bouldin_score(pca_data, kmeans_labels),
+        'Davies_Bouldin_GMM': davies_bouldin_score(pca_data, gmm_labels)
     }
 
-    # Save CSVs
-    os.makedirs('clustering_results', exist_ok=True)
-    gmm_df.to_csv('clustering_results/gmm_clusters.csv', index=False)
-    kmeans_df.to_csv('clustering_results/kmeans_clusters.csv', index=False)
+    # Apply t-SNE for visualization
+    tsne = TSNE(n_components=2, perplexity=40, random_state=42)
+    tsne_data = tsne.fit_transform(pca_data)
 
-    return metrics
+    # Create DataFrame for t-SNE results
+    tsne_reduced_data = pd.DataFrame(tsne_data, columns=["t-SNE Dimension 1", "t-SNE Dimension 2"])
+    tsne_reduced_data["KMeans_Cluster"] = kmeans_labels
+    tsne_reduced_data["GMM_Cluster"] = gmm_labels
 
-@app.route("/api/kmeans", methods=["GET"])
-def kmeans_route():
-    metrics = perform_clustering()
+    # Convert DataFrame to CSV string
+    csv_string_kmeans = tsne_reduced_data.to_csv(index=False, columns=["t-SNE Dimension 1", "t-SNE Dimension 2", "KMeans_Cluster"])
+    csv_string_gmm = tsne_reduced_data.to_csv(index=False, columns=["t-SNE Dimension 1", "t-SNE Dimension 2", "GMM_Cluster"])
+
+    return metrics, csv_string_kmeans, csv_string_gmm
+
+@app.route("/api/clustering-results", methods=["GET"])
+def clustering_results():
+    metrics, csv_string_kmeans, csv_string_gmm = perform_clustering()
     return jsonify({
-        "clusters_output_path": "../../../backend/kmeans_clusters.csv",
-        "metrics": metrics
+        "metrics": metrics,
+        "kmeans_csv": csv_string_kmeans,
+        "gmm_csv": csv_string_gmm
     })
 
 if __name__ == "__main__":

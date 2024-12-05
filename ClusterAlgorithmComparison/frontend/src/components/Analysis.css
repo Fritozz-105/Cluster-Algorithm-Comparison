@@ -21,3 +21,30 @@
     gap: 20px;
     justify-content: center;
 }
+.analysis-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.metrics-section {
+    width: 80%;
+    margin-bottom: 20px;
+}
+
+.metrics-section table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.metrics-section th,
+.metrics-section td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.metrics-section th {
+    font-weight: bold;
+}

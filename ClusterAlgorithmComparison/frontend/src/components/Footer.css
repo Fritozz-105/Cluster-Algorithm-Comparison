@@ -13,7 +13,7 @@
 .footer-content {
     max-width: 1200px;
     width: 100%;
-    padding: 5px 15px;
+    padding: 1px 5px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -21,6 +21,7 @@
 
 .footer-content h5 {
     color: white;
-    font-size: 20px;
+    font-size: 16px;
     text-align: center;
+    line-height: 1;
 }
