@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
 from typing import Tuple
-from sklearn.preprocessing import StandardScaler  # For feature scaling
 
 
 class KMeansClustering:
@@ -57,47 +59,7 @@ class KMeansClustering:
             self.centroids = updated_centroids
 
         return self.labels, self.centroids
-    
-    def calculate_within_cluster_variances(self, data: np.ndarray) -> pd.DataFrame:
-        """
-        Calculate within-cluster variances for each cluster.
 
-        Args:
-            data (np.ndarray): Standardized data to evaluate.
-
-        Returns:
-            pd.DataFrame: Variance metrics for each cluster.
-        """
-        variances = {
-            f"Cluster_{i}": data[self.labels == i].var(axis=0).mean()
-            for i in range(self.n_clusters)
-        }
-        return pd.DataFrame.from_dict(variances, orient="index", columns=["Within-Cluster Variance"])
-
-
-def find_optimal_clusters(data: np.ndarray, max_clusters: int = 10) -> None:
-    """
-    Uses the elbow method to identify the optimal number of clusters.
-
-    Args:
-        data (np.ndarray): The input data for clustering.
-        max_clusters (int): The maximum number of clusters to test.
-    """
-    distortions = []
-    for k in range(1, max_clusters + 1):
-        model = KMeansClustering(n_clusters=k)
-        labels, centroids = model.fit(data)
-        distortion = sum(
-            np.min(np.linalg.norm(data[:, np.newaxis] - centroids, axis=2), axis=1)
-        )
-        distortions.append(distortion)
-
-    plt.figure()
-    plt.plot(range(1, max_clusters + 1), distortions, marker="o")
-    plt.title("Elbow Method for Optimal Clusters")
-    plt.xlabel("Number of Clusters")
-    plt.ylabel("Distortion")
-    plt.show()
 
 if __name__ == "__main__":
     # Load preprocessed data
@@ -105,38 +67,39 @@ if __name__ == "__main__":
     print(f"Loading data from {input_csv}...")
     data = pd.read_csv(input_csv, index_col=0)
 
-    # Ensure features are numeric and standardized
-    print("Standardizing data...")
+    # Standardize features
+    print("Standardizing features...")
     scaler = StandardScaler()
-    feature_data = scaler.fit_transform(data)
+    standardized_data = scaler.fit_transform(data.values)
 
-    # Elbow method to determine optimal clusters
-    print("Running elbow method to find optimal number of clusters...")
-    find_optimal_clusters(feature_data)
+    # Apply PCA
+    print("Performing PCA for dimensionality reduction...")
+    pca = PCA(n_components=5)
+    pca_data = pca.fit_transform(standardized_data)
+    print(f"PCA explained variance ratio: {pca.explained_variance_ratio_}")
 
-    # Perform clustering with a selected number of clusters
-    n_clusters = 4  # Adjust based on the elbow method results
-    print(f"Applying K-Means clustering with {n_clusters} clusters...")
+    # Apply K-Means clustering
+    n_clusters = 2
+    print(f"Fitting K-Means with {n_clusters} clusters...")
     kmeans = KMeansClustering(n_clusters=n_clusters)
-    labels, centroids = kmeans.fit(feature_data)
+    labels, centroids = kmeans.fit(pca_data)
 
-    # Save clustering results
-    data["KMeans_Cluster"] = labels
+    # Save results
     output_csv = "ClusterAlgorithmComparison/backend/sp500_kmeans_clusters.csv"
+    data["KMeans_Cluster"] = labels
     print(f"Saving cluster results to {output_csv}...")
     data.to_csv(output_csv, index=True)
 
-    # Calculate within-cluster variances and save
-    cluster_variances = kmeans.calculate_within_cluster_variances(feature_data)
-    variances_csv = "ClusterAlgorithmComparison/backend/sp500_kmeans_variances.csv"
-    print(f"Saving cluster variances to {variances_csv}...")
-    cluster_variances.to_csv(variances_csv, index=True)
+    # Visualize using t-SNE
+    print("Applying t-SNE for visualization...")
+    tsne = TSNE(n_components=2, perplexity=40, random_state=42)
+    tsne_data = tsne.fit_transform(pca_data)
 
-    # Visualize clustering
-    plt.scatter(feature_data[:, 0], feature_data[:, 1], c=labels, cmap="viridis", s=10)
+    plt.figure(figsize=(10, 6))
+    plt.scatter(tsne_data[:, 0], tsne_data[:, 1], c=labels, cmap="viridis", s=10)
     plt.scatter(centroids[:, 0], centroids[:, 1], c="red", marker="x", s=100, label="Centroids")
     plt.title("K-Means Clustering Results")
-    plt.xlabel("Feature 1 (Standardized)")
-    plt.ylabel("Feature 2 (Standardized)")
+    plt.xlabel("t-SNE Dimension 1")
+    plt.ylabel("t-SNE Dimension 2")
     plt.legend()
     plt.show()
