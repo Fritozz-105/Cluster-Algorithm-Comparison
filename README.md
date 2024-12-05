@@ -61,16 +61,11 @@ python main.py
 2. **Data Preprocessing**:
    - Daily **returns** are calculated for each stock to measure price changes.
    - Rolling **volatility** is calculated over a 20-day window to assess risk.
-   - Both features are normalized using Z-scores to standardize the data.
 
 3. **Clustering Algorithm**:
-   - **K-Means Clustering** is implemented from scratch to identify clusters in the data.
+   - **K-Means Clustering** and **Gaussian Mixture Model** are implemented from scratch to identify clusters in the data.
    - The number of clusters is determined using the **Elbow Method**, which evaluates distortion as a function of cluster count.
 
 4. **Cluster Validation**:
    - Within-cluster variances are calculated to measure cluster compactness and validate clustering performance.
-
-5. **Outputs**:
-   - Cluster assignments for each stock are saved to a CSV file.
-   - Within-cluster variances are stored for deeper analysis.
-   - Visualizations are generated for clustering results and the elbow method.
+   - Other metrics are calculated for comparison, such as silhouette score, calinski-harabasz Index, and Davies-Bouldin Index.
