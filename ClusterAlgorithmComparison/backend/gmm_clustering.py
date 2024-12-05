@@ -178,6 +178,12 @@ class GMM:
         tsne = TSNE(n_components=2, perplexity=40, random_state=42)
         reduced_data = tsne.fit_transform(X)
 
+        # Saving t-SNE-transformed data
+        tsne_output_csv = "ClusterAlgorithmComparison/backend/sp500_tsne_reduced_gmm.csv"
+        print(f"Saving t-SNE-transformed data to {tsne_output_csv}...")
+        tsne_reduced_data = pd.DataFrame(reduced_data, columns=["t-SNE Dimension 1", "t-SNE Dimension 2"])
+        tsne_reduced_data.to_csv(tsne_output_csv, index=False)
+
         plt.figure(figsize=(10, 6))
         for cluster in range(self.n_clusters):
             cluster_points = reduced_data[labels == cluster]
@@ -235,6 +241,12 @@ if __name__ == "__main__":
     pca: PCA = PCA(n_components=n_components)
     reduced_data: np.ndarray = pca.fit_transform(feature_data)
     print(f"PCA explained variance ratio: {pca.explained_variance_ratio_}")
+
+    # Saving PCA-reduced data
+    pca_output_csv = "ClusterAlgorithmComparison/backend/sp500_pca_reduced_gmm.csv"
+    print(f"Saving PCA-reduced data to {pca_output_csv}...")
+    pca_reduced_data = pd.DataFrame(reduced_data, columns=[f"PCA_{i+1}" for i in range(reduced_data.shape[1])])
+    pca_reduced_data.to_csv(pca_output_csv, index=False)
 
     # Fit GMM model
     n_clusters: int = 2
