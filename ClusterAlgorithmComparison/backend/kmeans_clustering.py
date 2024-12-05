@@ -78,6 +78,12 @@ if __name__ == "__main__":
     pca_data = pca.fit_transform(standardized_data)
     print(f"PCA explained variance ratio: {pca.explained_variance_ratio_}")
 
+    # Saving PCA-reduced data
+    pca_output_csv = "ClusterAlgorithmComparison/backend/sp500_pca_reduced_kmeans.csv"
+    print(f"Saving PCA-reduced data to {pca_output_csv}...")
+    pca_reduced_data = pd.DataFrame(pca_data, columns=[f"PCA_{i+1}" for i in range(pca_data.shape[1])])
+    pca_reduced_data.to_csv(pca_output_csv, index=False)
+
     # Apply K-Means clustering
     n_clusters = 2
     print(f"Fitting K-Means with {n_clusters} clusters...")
@@ -94,6 +100,12 @@ if __name__ == "__main__":
     print("Applying t-SNE for visualization...")
     tsne = TSNE(n_components=2, perplexity=40, random_state=42)
     tsne_data = tsne.fit_transform(pca_data)
+
+    # Saving t-SNE-transformed data
+    tsne_output_csv = "ClusterAlgorithmComparison/backend/sp500_tsne_reduced_kmeans.csv"
+    print(f"Saving t-SNE-transformed data to {tsne_output_csv}...")
+    tsne_reduced_data = pd.DataFrame(tsne_data, columns=["t-SNE Dimension 1", "t-SNE Dimension 2"])
+    tsne_reduced_data.to_csv(tsne_output_csv, index=False)
 
     plt.figure(figsize=(10, 6))
     plt.scatter(tsne_data[:, 0], tsne_data[:, 1], c=labels, cmap="viridis", s=10)
