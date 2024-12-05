@@ -1,103 +1,70 @@
-import pandas as pd
 import numpy as np
-from sklearn.metrics import silhouette_score
+import pandas as pd
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 import matplotlib.pyplot as plt
-from typing import Tuple
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
+from gmm_clustering import GMM
+from kmeans_clustering import KMeansClustering
 
-def load_cluster_results(kmeans_csv: str, gmm_csv: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Load cluster assignments from KMeans and GMM results.
+# Load data
+input_csv = "ClusterAlgorithmComparison/backend/sp500_preprocessed_data.csv"
+print(f"Loading data from {input_csv}...")
+data = pd.read_csv(input_csv, index_col=0)
 
-    Args:
-        kmeans_csv (str): Path to the KMeans cluster results CSV file.
-        gmm_csv (str): Path to the GMM cluster results CSV file.
+# Standardize features
+print("Standardizing features...")
+scaler = StandardScaler()
+standardized_data = scaler.fit_transform(data.values)
 
-    Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]: DataFrames containing KMeans and GMM cluster assignments.
-    """
-    kmeans_results = pd.read_csv(kmeans_csv)
-    gmm_results = pd.read_csv(gmm_csv)
-    return kmeans_results, gmm_results
+# Apply PCA
+print("Performing PCA for dimensionality reduction...")
+from sklearn.decomposition import PCA
+pca = PCA(n_components=5)
+pca_data = pca.fit_transform(standardized_data)
+print(f"PCA explained variance ratio: {pca.explained_variance_ratio_}")
 
-def compute_silhouette_score(data: np.ndarray, labels: np.ndarray) -> float:
-    """
-    Compute the Silhouette Score for clustering.
+# Fit GMM
+print("Fitting GMM...")
+gmm = GMM(n_clusters=2)
+gmm.fit(pca_data)
+gmm_labels = gmm.predict(pca_data)
 
-    Args:
-        data (np.ndarray): The feature data used for clustering.
-        labels (np.ndarray): Cluster labels.
+# Fit K-Means
+print("Fitting K-Means...")
+kmeans = KMeansClustering(n_clusters=2)
+kmeans_labels, _ = kmeans.fit(pca_data)
 
-    Returns:
-        float: The Silhouette Score.
-    """
-    return silhouette_score(data, labels)
+# Compute metrics
+print("Calculating clustering metrics...")
+silhouette_gmm = silhouette_score(pca_data, gmm_labels)
+silhouette_kmeans = silhouette_score(pca_data, kmeans_labels)
+calinski_gmm = calinski_harabasz_score(pca_data, gmm_labels)
+calinski_kmeans = calinski_harabasz_score(pca_data, kmeans_labels)
+davies_gmm = davies_bouldin_score(pca_data, gmm_labels)
+davies_kmeans = davies_bouldin_score(pca_data, kmeans_labels)
 
-def plot_comparison(kmeans_data: pd.DataFrame, gmm_data: pd.DataFrame, feature_data: np.ndarray):
-    """
-    Plot side-by-side comparisons of KMeans and GMM clusters.
+print("\nClustering Performance Metrics:")
+print(f"Silhouette Score (GMM): {silhouette_gmm:.4f}, (K-Means): {silhouette_kmeans:.4f}")
+print(f"Calinski-Harabasz Index (GMM): {calinski_gmm:.4f}, (K-Means): {calinski_kmeans:.4f}")
+print(f"Davies-Bouldin Index (GMM): {davies_gmm:.4f}, (K-Means): {davies_kmeans:.4f}")
 
-    Args:
-        kmeans_data (pd.DataFrame): KMeans cluster assignments and centroids.
-        gmm_data (pd.DataFrame): GMM cluster assignments and centroids.
-        feature_data (np.ndarray): The original feature data.
-    """
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    
-    # Plot KMeans Clusters
-    axes[0].scatter(feature_data[:, 0], feature_data[:, 1], c=kmeans_data['KMeans_Cluster'], cmap='viridis', alpha=0.6)
-    axes[0].scatter(kmeans_data['Centroid_0'], kmeans_data['Centroid_1'], c='red', marker='x', label='Centroids')
-    axes[0].set_title("KMeans Clustering")
-    axes[0].legend()
+# Visualize comparison with t-SNE
+print("Generating t-SNE visualization for both models...")
+tsne = TSNE(n_components=2, perplexity=40, random_state=42)
+tsne_data = tsne.fit_transform(pca_data)
 
-    # Plot GMM Clusters
-    axes[1].scatter(feature_data[:, 0], feature_data[:, 1], c=gmm_data['Cluster'], cmap='viridis', alpha=0.6)
-    axes[1].scatter(gmm_data['Centroid_0'], gmm_data['Centroid_1'], c='red', marker='x', label='Centroids')
-    axes[1].set_title("GMM Clustering")
-    axes[1].legend()
+plt.figure(figsize=(12, 8))
+# GMM clusters
+plt.scatter(tsne_data[gmm_labels == 0, 0], tsne_data[gmm_labels == 0, 1], label="GMM Cluster 0", alpha=0.6)
+plt.scatter(tsne_data[gmm_labels == 1, 0], tsne_data[gmm_labels == 1, 1], label="GMM Cluster 1", alpha=0.6)
 
-    plt.show()
+# K-Means clusters
+plt.scatter(tsne_data[kmeans_labels == 0, 0], tsne_data[kmeans_labels == 0, 1], marker="x", label="K-Means Cluster 0", alpha=0.6)
+plt.scatter(tsne_data[kmeans_labels == 1, 0], tsne_data[kmeans_labels == 1, 1], marker="x", label="K-Means Cluster 1", alpha=0.6)
 
-def generate_summary(kmeans_silhouette: float, gmm_log_likelihood: float):
-    """
-    Generate a comparison summary of KMeans and GMM results.
-
-    Args:
-        kmeans_silhouette (float): Silhouette Score for KMeans.
-        gmm_log_likelihood (float): Log-Likelihood value for GMM.
-
-    Prints:
-        A textual summary of the clustering comparison.
-    """
-    print("### Comparison Summary ###")
-    print(f"KMeans Silhouette Score: {kmeans_silhouette:.4f}")
-    print(f"GMM Log-Likelihood: {gmm_log_likelihood:.4f}")
-    print("\nObservations:")
-    print("- KMeans clusters evaluated with Silhouette Score; higher is better.")
-    print("- GMM clusters evaluated with Log-Likelihood; higher indicates better fit.")
-    print("- Examine cluster visuals for separation and density.")
-
-if __name__ == "__main__":
-    # File paths
-    kmeans_csv = "ClusterAlgorithmComparison/backend/sp500_kmeans_clusters.csv"
-    gmm_csv = "ClusterAlgorithmComparison/backend/sp500_gmm_clusters.csv"
-    feature_data_csv = "ClusterAlgorithmComparison/backend/sp500_preprocessed_data.csv"
-
-    # Load feature data and cluster results
-    print("Loading feature data and cluster results...")
-    feature_data = pd.read_csv(feature_data_csv, index_col=0).values
-    kmeans_data, gmm_data = load_cluster_results(kmeans_csv, gmm_csv)
-
-    # Compute metrics
-    print("Computing Silhouette Score for KMeans...")
-    kmeans_silhouette = compute_silhouette_score(feature_data, kmeans_data['KMeans_Cluster'].values)
-
-    print("Retrieving Log-Likelihood for GMM...")
-    gmm_log_likelihood = gmm_data['Log_Likelihood'].iloc[0]
-
-    # Plot comparison
-    print("Plotting cluster comparison...")
-    plot_comparison(kmeans_data, gmm_data, feature_data)
-
-    # Generate and print summary
-    print("Generating comparison summary...")
-    generate_summary(kmeans_silhouette, gmm_log_likelihood)
+plt.title("GMM vs. K-Means Clustering Results (t-SNE)")
+plt.xlabel("t-SNE Dimension 1")
+plt.ylabel("t-SNE Dimension 2")
+plt.legend()
+plt.show()
