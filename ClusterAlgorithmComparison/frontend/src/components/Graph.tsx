@@ -13,39 +13,54 @@ interface GraphProps {
 const Graph: React.FC<GraphProps> = ({ csv, title, xAxisTitle, yAxisTitle }) => {
     const [chartData, setChartData] = useState<any[]>([]);
     const [xAxisColumn, setXAxisColumn] = useState<string>('');
+    const [yAxisColumn, setYAxisColumn] = useState<string>('');
+    const [clusterColumn, setClusterColumn] = useState<string>('');
 
     useEffect(() => {
         const parseCSV = () => {
             Papa.parse(csv, {
-                download: true,
                 header: true,
+                dynamicTyping: true,
                 complete: (results) => {
-                    const parsedData = results.data.map((row: any) => {
-                        return Object.keys(row).reduce((parsedRow, key) => {
-                            parsedRow[key] = isNaN(Number(row[key]))
-                                ? row[key]
-                                : Number(row[key]);
-                            return parsedRow;
-                        }, {} as any);
-                    });
-
-                    const numericColumns = Object.keys(parsedData[0])
-                        .filter(key => typeof parsedData[0][key] === 'number' && key.toLowerCase() !== 'id');
-
-                    if (numericColumns.length > 0) {
-                        const firstNumericColumn = numericColumns[0];
-                        setXAxisColumn(firstNumericColumn);
-
-                        const sortedData = [...parsedData].sort((a, b) =>
-                            (a[firstNumericColumn] || 0) - (b[firstNumericColumn] || 0)
-                        );
-
-                        setChartData(sortedData);
-                    } else {
-                        setChartData(parsedData);
+                    if (results.data.length === 0) {
+                        console.error("No data parsed from CSV");
+                        return;
                     }
 
-                    console.log("Parsed Data:", parsedData);
+                    // Determine columns
+                    const columns = Object.keys(results.data[0]);
+                    const numericColumns = columns.filter(
+                        key => typeof results.data[0][key] === 'number'
+                    );
+
+                    // Find t-SNE columns and cluster column
+                    const tsneColumns = columns.filter(
+                        col => col.includes('t-SNE')
+                    );
+                    const clusterCol = columns.find(
+                        col => col.toLowerCase().includes('cluster')
+                    );
+
+                    if (tsneColumns.length >= 2 && clusterCol) {
+                        setXAxisColumn(tsneColumns[0]);
+                        setYAxisColumn(tsneColumns[1]);
+                        setClusterColumn(clusterCol);
+
+                        // Color coding based on cluster
+                        const colorMap: { [key: number]: string } = {
+                            0: 'hsl(180, 70%, 50%)',   // Blue for cluster 0
+                            1: 'hsl(340, 70%, 50%)'    // Red for cluster 1
+                        };
+
+                        const coloredData = results.data.map(row => ({
+                            ...row,
+                            color: colorMap[row[clusterCol]] || 'gray'
+                        }));
+
+                        setChartData(coloredData);
+                    } else {
+                        console.error("Could not find appropriate columns", { columns, tsneColumns, clusterCol });
+                    }
                 },
                 skipEmptyLines: true
             });
@@ -63,8 +78,8 @@ const Graph: React.FC<GraphProps> = ({ csv, title, xAxisTitle, yAxisTitle }) => 
                         <ScatterChart>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis
-                                dataKey={xAxisColumn}
                                 type="number"
+                                dataKey={xAxisColumn}
                                 name={xAxisColumn}
                                 label={{
                                     value: xAxisTitle || xAxisColumn,
@@ -73,13 +88,11 @@ const Graph: React.FC<GraphProps> = ({ csv, title, xAxisTitle, yAxisTitle }) => 
                                 }}
                             />
                             <YAxis
-                                dataKey={Object.keys(chartData[0]).find(key =>
-                                    typeof chartData[0][key] === 'number' && key !== xAxisColumn
-                                )}
                                 type="number"
-                                name={yAxisTitle}
+                                dataKey={yAxisColumn}
+                                name={yAxisColumn}
                                 label={{
-                                    value: yAxisTitle || 'Y-Axis',
+                                    value: yAxisTitle || yAxisColumn,
                                     angle: -90,
                                     position: 'insideLeft'
                                 }}
@@ -89,7 +102,12 @@ const Graph: React.FC<GraphProps> = ({ csv, title, xAxisTitle, yAxisTitle }) => 
                             <Scatter
                                 name="Data Points"
                                 data={chartData}
-                                fill="hsl(180, 70%, 50%)"
+                                fill={chartData[0]?.color || 'hsl(180, 70%, 50%)'}
+                                strokeOpacity={0.7}
+                                fillOpacity={0.6}
+                                shape="circle"
+                                strokeWidth={1}
+                                r={2}
                             />
                         </ScatterChart>
                     </ResponsiveContainer>
